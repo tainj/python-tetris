@@ -47,7 +47,7 @@ def main():
 
         if current_progress < total_progress:
             current_progress += 1
-            time.sleep(0.05)  # Имитация задержки
+            time.sleep(0.07)  # Имитация задержки
 
         pygame.display.flip()
         clock.tick(30)

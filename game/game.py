@@ -1,19 +1,9 @@
-import os
 import random
 
 import pygame
-from tetris.board import Board
-
-
-def load_image(name, subfolder='static/img'):
-    fullname = os.path.join(subfolder, name)
-
-    if not os.path.isfile(fullname):
-        raise FileNotFoundError(f"Файл с изображением '{fullname}' не найден")
-
-    # Загружаем изображение
-    image = pygame.image.load(fullname)
-    return image
+from game.board import Board
+from game.loading import Loading
+from game.utils import load_image
 
 
 class Game(pygame.sprite.Sprite):
@@ -23,10 +13,11 @@ class Game(pygame.sprite.Sprite):
         self.board = Board()
         self.width, self.height = 500, 620
         self.screen = pygame.display.set_mode((self.width, self.height))
+        self.loading = Loading(self.screen)
         self.clock = pygame.time.Clock()
 
         self.MYEVENTTYPE = pygame.USEREVENT + 1
-        self.TIME = 300  # Интервал в миллисекундах
+        self.TIME = 300
         pygame.time.set_timer(self.MYEVENTTYPE, self.TIME)
 
         self.font = pygame.font.SysFont('timesnewroman', 38)
@@ -94,3 +85,6 @@ class Game(pygame.sprite.Sprite):
 
     def draw_progress_bar(self):
         pass
+
+    def load(self):
+        self.loading.run()

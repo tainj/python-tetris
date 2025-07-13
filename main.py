@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QGridLayout, QWidget, QTa
 from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtWidgets import QMainWindow, QTableWidgetItem
 
-from tetris.game import Game
+from game.game import Game
 
 
 def start_screen():
@@ -219,6 +219,7 @@ if __name__ == '__main__':
     #     pygame.display.flip()
     # pygame.quit()
     game = Game()
+    game.load()
     game.run()
 
 
