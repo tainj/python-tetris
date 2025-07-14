@@ -1,28 +1,7 @@
-import pygame
 import random
-
-
-bright_colors = [
-    (255, 0, 0),       # Красный
-    (0, 255, 0),       # Зелёный
-    (0, 0, 255),       # Синий
-    (255, 255, 0),     # Жёлтый
-    (255, 0, 255),     # Пурпурный
-    (0, 255, 255),     # Голубой
-    (255, 128, 0),     # Оранжевый
-    (128, 0, 255),     # Фиолетовый
-    (255, 0, 128),     # Розовый
-    (0, 255, 128),     # Мятный
-    (128, 255, 0),     # Лаймовый
-    (0, 128, 255),     # Аквамарин
-    (255, 128, 128),   # Светло-розовый
-    (128, 255, 128),   # Светло-зелёный
-    (128, 128, 255),   # Светло-синий
-]
-
-
-def get_color():
-    return random.choice(bright_colors)
+from typing import Optional
+import pygame
+from game.shape import Shape, IShape, OShape, TShape, ZShape, SShape, LShape, JShape
 
 
 class Board:
@@ -30,76 +9,42 @@ class Board:
     def __init__(self, width=10, height=20):
         self.width = width
         self.height = height
-        self.board = []
-        for i in range(height):
-            self.board.append([])
-            for _ in range(width):
-                self.board[i].append(0)
+        self.board = [[0 for _ in range(self.width)] for _ in range(self.height)]
         # значения по умолчанию
 
         self.score = 0
-        self.left = 0
-        self.top = 0
-        self.cell_size = 30
-        self.a = 0
-        self.o = [(4, 0), (5, 0), (4, 1), (5, 1)]
-        self.c_o = None
-        self.z = [(3, 0), (4, 0), (4, 1), (5, 1)]
-        self.c_z = (4, 1)
-        self.s = [(3, 1), (4, 1), (4, 0), (5, 0)]
-        self.c_s = (4, 1)
-        self.t = [(3, 0), (4, 0), (5, 0), (4, 1)]
-        self.c_t = (4, 0)
-        self.bl = [(3, 0), (4, 0), (5, 0), (3, 1)]
-        self.c_bl = (4, 0)
-        self.sl = [(3, 0), (4, 0), (5, 0), (6, 0)]
-        self.c_sl = (5, 0)
-        self.j = [(3, 0), (4, 0), (5, 0), (5, 1)]
-        self.c_j = (4, 0)
-        self.shapes = [self.o, self.z, self.s, self.t, self.bl, self.sl, self.j]
-        self.cs = [self.c_o, self.c_z, self.c_s, self.c_t, self.c_bl, self.c_sl, self.c_j]
 
-    # def open_file(self, name, os=None):
-    #     if not os.path.exists('files.txt'):
-    #         f = open('files.txt', 'w')  # создание файла
-    #         f.write(f'{self.name}, {self.text_time}, {self.score}\n')
-    #         print(1)
-    #     else:
-    #         f = open('files.txt', 'a')
-    #         f.write(f'{self.name}, {self.text_time}, {self.score}\n')
-    #     self.a = 1
-    #     f.close()
+        # координаты начала board
+        self.left: int = 0
+        self.top: int = 0
+        self.cell_size: int = 30  # размер клетки
 
-    def set_view(self, left, top, cell_size):
-        self.left = left
-        self.top = top
-        self.cell_size = cell_size
+        # инициализация дополнительных переменных
+        self.shapes = [IShape, OShape, TShape, ZShape, SShape, LShape, JShape]
+        self.shape: Optional[Shape] = None
+        self.next_shape: Optional[Shape] = None
 
-    def get_shape(self):
-        global run
-        self.shape_i = random.randrange(6)
-        self.shape = list(self.shapes[self.shape_i])
-        if self.shape_i:
-            self.c_shape = list(self.cs[self.shape_i])
+    def generate_shape(self):
+        shape_class = random.choice(self.shapes)  # выбираем случайный класс фигуры
+        return shape_class()
+
+    def get_shape(self) -> bool:
+        if not self.next_shape:  # проверка на наличие след фигуры
+            self.shape = self.generate_shape()
+            self.next_shape = self.generate_shape()
         else:
-            self.c_shape = None
-        for i, elem in enumerate(self.shape):
-            self.shape[i] = list(elem)
-        self.color = get_color()
-        for i in self.shape:
-            x = int(i[0])
-            y = int(i[1])
-            if self.board[y][x]:
-                run = True
-                if not self.a:
-                    self.open_file('files.txt')
-                return
-        for i in self.shape:
-            x = int(i[0])
-            y = int(i[1])
-            self.board[y][x] = self.color
+            self.shape = self.next_shape
+            self.next_shape = self.generate_shape()
 
-    def render(self, screen):
+        for x, y in self.shape.coordinates: # проверяет, что нет фигур если есть вызывает true
+            if self.board[y][x]: # иначе false
+                return True
+
+        for x, y in self.shape.coordinates:  # создаем фигуру
+            self.board[y][x] = self.shape.color
+        return False
+
+    def render(self, screen):  # прорисовка поля
         for y in range(self.height):
             for x in range(self.width):
                 if not self.board[y][x]:
@@ -136,163 +81,115 @@ class Board:
                                      (x * self.cell_size + self.left + 1,
                                       y * self.cell_size + self.top + self.cell_size - 2))
 
-    def get_click(self, mouse_pos):
-        cell = self.get_cell(mouse_pos)
-        return cell
+    def can_move(self, dx, dy):
+        for x, y in self.shape.coordinates:
+            new_x = x + dx
+            new_y = y + dy
 
-    def get_cell(self, mouse_pos):
-        cell_x = (mouse_pos[0] - self.left) // self.cell_size
-        cell_y = (mouse_pos[1] - self.top) // self.cell_size
-        if cell_x < 0 or cell_x >= self.width or cell_y < 0 or cell_y >= self.height:
-            return None
-        else:
-            return cell_x, cell_y
+            if new_x < 0 or new_x >= self.width or new_y >= self.height:
+                return False
+
+            if self.board[new_y][new_x] != 0 and [new_x, new_y] not in self.shape.coordinates:
+                return False
+
+        return True
 
     def moving_shape_left(self):
-        self.old_shape = self.shape.copy()
-        if self.c_shape:
-            self.oldc_shape = self.c_shape.copy()
-            self.c_shape = [self.c_shape[0] - 1, self.c_shape[1]]
-        else:
-            self.oldc_shape = None
-            self.c_shape = None
-        for i in range(len(self.shape)):
-            x = self.shape[i][0]
-            y = self.shape[i][1]
-            if x + 1 < 0 or self.board[y][x - 1] != self.color and self.board[y][x - 1] != 0:
-                return
-        for i in range(len(self.shape)):
-            x = self.shape[i][0]
-            y = self.shape[i][1]
-            self.board[y][x] = 0
-        for i in range(len(self.shape)):
-            if self.shape[i][0] - 1 >= 0:
-                self.shape[i] = [self.shape[i][0] - 1, self.shape[i][1]]
-            else:
-                self.from_error()
-                return
-        self.draw_shapes()
+        if self.can_move(-1, 0):
+            for x, y in self.shape.coordinates:
+                self.board[y][x] = 0
+            for i in range(len(self.shape.coordinates)):
+                self.shape.coordinates[i][0] -= 1
+
+            if self.shape.center:
+                self.shape.center[1] -= 1  # сдвигаем центр влево
+
+            self.draw_shapes()
 
     def moving_shape_right(self):
-        self.old_shape = self.shape.copy()
-        if self.c_shape:
-            self.oldc_shape = self.c_shape.copy()
-            self.c_shape = [self.c_shape[0] + 1, self.c_shape[1]]
-        else:
-            self.oldc_shape = None
-            self.c_shape = None
-        for i in range(len(self.shape)):
-            x = self.shape[i][0]
-            y = self.shape[i][1]
-            if x + 2 > 10 or self.board[y][x + 1] != self.color and self.board[y][x + 1] != 0:
-                return
-        for i in range(len(self.shape)):
-            x = self.shape[i][0]
-            y = self.shape[i][1]
-            self.board[y][x] = 0
-        for i in range(len(self.shape)):
-            if self.shape[i][0] + 1 <= 10:
-                self.shape[i] = [self.shape[i][0] + 1, self.shape[i][1]]
-            else:
-                self.from_error()
-                return
-        self.draw_shapes()
+        if self.can_move(1, 0):
+            for x, y in self.shape.coordinates:
+                self.board[y][x] = 0
+            for i in range(len(self.shape.coordinates)):
+                self.shape.coordinates[i][0] += 1
+
+            if self.shape.center:
+                self.shape.center[0] += 1  # сдвигаем центр вправо
+
+            self.draw_shapes()
 
     def turning_shape(self):
-        self.old_shape = self.shape.copy()
-        if self.c_shape:
-            self.old_shape = self.shape.copy()
-            for i in range(len(self.shape)):
-                x = self.shape[i][0]
-                y = self.shape[i][1]
+        if self.shape.center:
+            old_shape_coordinates = self.shape.coordinates.copy()
+            for x, y in self.shape.coordinates:  # отчищаем
                 self.board[y][x] = 0
-            for i in range(len(self.shape)):
-                x, y = [-(self.shape[i][1] - self.c_shape[1]) + self.c_shape[0],
-                        self.shape[i][0] - self.c_shape[0] + self.c_shape[1]]
+            for i in range(len(self.shape.coordinates)):
+                x, y = [-(self.shape.coordinates[i][1] - self.shape.center[1]) + self.shape.center[0],
+                        self.shape.coordinates[i][0] - self.shape.center[0] + self.shape.center[1]]
                 if x + 1 > 10 or y + 1 > 20 or x < 0:
-                    self.from_error()
+                    self.rollback_shape(old_shape_coordinates)
                     return
-                if self.board[y][x] != self.color and self.board[y][x] != 0:
-                    self.from_error()
+                if self.board[y][x] != 0 and [x, y] not in old_shape_coordinates:
+                    self.rollback_shape(old_shape_coordinates)
                     return
                 else:
-                    self.shape[i] = [x, y]
+                    self.shape.coordinates[i] = [x, y]
             self.draw_shapes()
 
     def draw_shapes(self):
-        for i in range(len(self.shape)):
-            x = self.shape[i][0]
-            y = self.shape[i][1]
+        for x, y in self.shape.coordinates:
             if not y < 0:
-                self.board[y][x] = self.color
+                self.board[y][x] = self.shape.color
 
-    def from_error(self):
-        self.shape = self.old_shape
-        self.c_shape = self.oldc_shape
-        self.old_shape = None
-        for i in range(len(self.shape)):
-            x = self.shape[i][0]
-            y = self.shape[i][1]
-            self.board[y][x] = self.color
+    def rollback_shape(self, coordinates: list[list[int, int]]):
+        self.shape.coordinates = coordinates
+        for x, y in self.shape.coordinates:
+            self.board[y][x] = self.shape.color
         return
 
-    def drop_shape(self):
-        self.old_shape = self.shape.copy()
-        if self.c_shape:
-            self.oldc_shape = self.c_shape.copy()
-            self.c_shape = [self.c_shape[0], self.c_shape[1] + 1]
-        else:
-            self.oldc_shape = None
-            self.c_shape = None
-        for i in range(len(self.shape)):
-            x = self.shape[i][0]
-            y = self.shape[i][1]
-            if y + 1 == 20:
-                self.delete_line()
-                self.get_shape()
-                return 1
-            if self.board[y + 1][x] != self.color and self.board[y + 1][x] != 0:
-                self.delete_line()
-                self.get_shape()
-                return 1
-        for i in range(len(self.shape)):
-            x = self.shape[i][0]
-            y = self.shape[i][1]
+    def drop_shape(self) -> bool:
+        if not self.can_move(0, 1):
+            self.delete_line()
+            self.get_shape()
+            return False
+
+        for x, y in self.shape.coordinates:  # удаляем фигуру
             self.board[y][x] = 0
-        for i in range(len(self.shape)):
-            if self.shape[i][0] + 1 <= 20:
-                self.shape[i] = [self.shape[i][0], self.shape[i][1] + 1]
-            else:
-                self.from_error()
-                return
+
+        for i in range(len(self.shape.coordinates)): # создаем на новых координатах
+            self.shape.coordinates[i][1] += 1
+
+        if self.shape.center:
+            self.shape.center[1] += 1  # сдвигаем центр вниз
+
         self.draw_shapes()
+        return True
 
     def delete_line(self):
-        self.y = []
-        for i in range(len(self.shape)):
-            if self.shape[i][1] not in self.y:
-                self.y.append(self.shape[i][1])
-        a = 0
-        for y in self.y:
-            cell = 0
+        y_coordinates = [] # сохраняем только координаты y
+        for i in range(len(self.shape.coordinates)):
+            if self.shape.coordinates[i][1] not in y_coordinates:
+                y_coordinates.append(self.shape.coordinates[i][1])
+        k = 0  # коэффициент, который отвечает за начисление очков
+        for y in y_coordinates:
             for x in self.board[y]:
-                if x:
-                    cell += 1
+                if not x:
+                    break
             else:
-                if cell == 10:
-                    a += 1
-                    del self.board[y]
-                    self.board.insert(0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-        if a == 1:
+                k += 1
+                del self.board[y]  # удаление старой и вставка новой пустой строки
+                self.board.insert(0, [0 for _ in range(self.width)])
+
+        if k == 1:
             self.score += 100
-        elif a == 2:
+        elif k == 2:
             self.score += 300
-        elif a == 3:
+        elif k == 3:
             self.score += 700
-        elif a == 4:
+        elif k == 4:
             self.score += 1500
 
     def full_drop(self):
         a = self.drop_shape()
-        while not a:
+        while a:
             a = self.drop_shape()

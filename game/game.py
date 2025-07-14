@@ -3,6 +3,7 @@ import random
 import pygame
 from game.board import Board
 from game.loading import Loading
+from game.menu import Menu
 from game.utils import load_image
 
 
@@ -14,6 +15,7 @@ class Game(pygame.sprite.Sprite):
         self.width, self.height = 500, 620
         self.screen = pygame.display.set_mode((self.width, self.height))
         self.loading = Loading(self.screen)
+        self.menu = Menu(self.screen)
         self.clock = pygame.time.Clock()
 
         self.MYEVENTTYPE = pygame.USEREVENT + 1
@@ -83,8 +85,8 @@ class Game(pygame.sprite.Sprite):
         self.screen.blit(self.text_time, (325, 87))
         pygame.display.flip()
 
-    def draw_progress_bar(self):
-        pass
-
     def load(self):
         self.loading.run()
+
+    def show_menu(self):
+        self.menu.run()
