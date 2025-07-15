@@ -10,7 +10,7 @@ class Menu(State):
         self.font = pygame.font.Font(None, 50)  # Уменьшил шрифт для кнопки
         self.button_play = pygame.Rect(150, 300, 200, 50)  # Новая позиция и размер кнопки
         self.colors = {
-            "button": (0, 128, 255),  # Цвет кнопки
+            "button": (0, 33, 55),  # Цвет кнопки
             "text": (255, 255, 255)   # Цвет текста
         }
 

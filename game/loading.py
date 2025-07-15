@@ -5,8 +5,6 @@ from game.utils import load_image
 
 
 WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-BLUE = (0, 0, 255)
 
 
 class Loading(State):
@@ -29,8 +27,8 @@ class Loading(State):
     def render(self):
         self.progress = self.current_progress / self.total_progress
         self.filled_width = int(self.progress_width * self.progress)
-        pygame.draw.rect(self.screen, WHITE, (self.progress_x, self.progress_y, self.progress_width, self.progress_height), 2)
-        pygame.draw.rect(self.screen, WHITE, (self.progress_x, self.progress_y, self.filled_width, self.progress_height))
+        pygame.draw.rect(self.screen, (255, 255, 255), (self.progress_x, self.progress_y, self.progress_width, self.progress_height), 2)
+        pygame.draw.rect(self.screen, (255, 255, 255), (self.progress_x, self.progress_y, self.filled_width, self.progress_height))
         font = pygame.font.Font(None, 36)
         text = font.render(f"Loading... {int(self.progress * 100)}%", True, WHITE)
         text_rect = text.get_rect(center=(self.width // 2, self.progress_y - 30))

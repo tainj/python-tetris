@@ -1,4 +1,6 @@
 import random
+from pathlib import Path
+
 import pygame
 from game.board import Board
 from game.states import State
@@ -13,7 +15,13 @@ class Game(State):
         self.screen = screen
         self.MYEVENTTYPE = pygame.USEREVENT + 1
         self.TIME = 300
+        self.TIMER = pygame.USEREVENT + 1
+        self.TIME_for_TIMER = 1000
+        self.time = 0
         pygame.time.set_timer(self.MYEVENTTYPE, self.TIME)
+        pygame.time.set_timer(self.TIMER, self.TIME_for_TIMER)
+
+        self.results_file = Path("data") / "results.txt"
 
         self.font = pygame.font.SysFont('timesnewroman', 38)
         self.font2 = pygame.font.SysFont('arial', 38)
@@ -38,16 +46,20 @@ class Game(State):
 
     def update(self):
         self.label_score = self.font2.render(str(self.board.score), True, (255, 255, 255))
-        ticks = pygame.time.get_ticks()
-        seconds = int(ticks / 1000 % 60)
-        minutes = int(ticks / 60000 % 24)
-        hours = int(ticks / 3600000 % 24)
+        seconds = int(self.time % 60)
+        hours = int(self.time // 60 // 60)
+        minutes = int(self.time - seconds - hours * 60 * 60)
         out = f'{hours:02}:{minutes:02}:{seconds:02}'
         self.text_time = self.font2.render(out, True, (255, 255, 255))
 
     def handle_events(self, event) -> str:
+        if self.board.end:
+            self.func_for_end()
+            return 'end'
         if event.type == self.MYEVENTTYPE:
             self.board.drop_shape()
+        if event.type == self.TIMER:
+            self.time += 1
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT:
                 self.board.moving_shape_left()
@@ -57,6 +69,9 @@ class Game(State):
                 self.board.turning_shape()
             if event.key == pygame.K_RETURN:
                 self.board.full_drop()
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                return "pause"
         return ""
 
     def render(self):
@@ -70,3 +85,10 @@ class Game(State):
         self.board.render(self.screen)
         self.screen.blit(self.text_time, (325, 87))
         pygame.display.flip()
+
+    def func_for_end(self):
+        # обновляем поле
+        self.board.score_for_end = self.board.score
+        self.board.reset()
+        self.board.get_shape()
+        self.time = 0

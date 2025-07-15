@@ -29,6 +29,9 @@ class Board:
         self.shapes = [IShape, OShape, TShape, ZShape, SShape, LShape, JShape]
         self.shape: Optional[Shape] = None
         self.next_shape: Optional[Shape] = None
+        self.end = False
+        self.time = 0
+        self.score_for_end = 0
 
     def generate_shape(self):
         shape_class = random.choice(self.shapes)  # выбираем случайный класс фигуры
@@ -44,6 +47,7 @@ class Board:
 
         for x, y in self.shape.coordinates: # проверяет, что нет фигур если есть вызывает true
             if self.board[y][x]: # иначе false
+                self.end = True
                 return True
 
         for x, y in self.shape.coordinates:  # создаем фигуру
@@ -112,7 +116,7 @@ class Board:
                 self.shape.coordinates[i][0] -= 1
 
             if self.shape.center:
-                self.shape.center[1] -= 1  # сдвигаем центр влево
+                self.shape.center[0] -= 1  # сдвигаем центр влево
 
             self.draw_shapes()
 
@@ -203,3 +207,13 @@ class Board:
         a = self.drop_shape()
         while a:
             a = self.drop_shape()
+
+    def reset(self):
+        self.board = [[0 for _ in range(self.width)] for _ in range(self.height)]
+
+        self.score = 0
+
+        self.shape = None
+        self.next_shape = None
+
+        self.end = False
