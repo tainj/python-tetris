@@ -19,6 +19,12 @@ class Board:
         self.top: int = 0
         self.cell_size: int = 30  # размер клетки
 
+        # координаты начала для изображения след фигуры
+
+        self.left_next_board: int = 325
+        self.top_next_board: int = 325
+        self.cell_size: int = 30  # размер клетки
+
         # инициализация дополнительных переменных
         self.shapes = [IShape, OShape, TShape, ZShape, SShape, LShape, JShape]
         self.shape: Optional[Shape] = None
@@ -44,42 +50,46 @@ class Board:
             self.board[y][x] = self.shape.color
         return False
 
-    def render(self, screen):  # прорисовка поля
+    def draw_cell(self, screen, x, y, color, left=0, top=0):
+        """Рисует одну клетку на экране."""
+        self.left = left
+        self.top = top
+        cell_x = x * self.cell_size + self.left
+        cell_y = y * self.cell_size + self.top
+
+        # Рисуем внешнюю границу клетки
+        pygame.draw.rect(screen, pygame.Color(255, 255, 255), (cell_x, cell_y, self.cell_size, self.cell_size), 1)
+
+        # Если клетка не пустая, рисуем её цвет
+        if color:
+            # Рисуем основной цвет клетки
+            pygame.draw.rect(screen, pygame.Color(color),
+                             (cell_x + 1, cell_y + 1, self.cell_size - 2, self.cell_size - 2))
+
+            # Рисуем внутренние границы и эффекты
+            pygame.draw.rect(screen, pygame.Color(0, 0, 0),
+                             (cell_x + 1, cell_y + 1, self.cell_size - 2, self.cell_size - 2), 1)
+            pygame.draw.rect(screen, pygame.Color(0, 0, 0),
+                             (cell_x + 5, cell_y + 5, self.cell_size - 10, self.cell_size - 10), 1)
+
+            # Рисуем диагональные линии
+            pygame.draw.line(screen, pygame.Color(0, 0, 0), (cell_x + 1, cell_y + 1), (cell_x + 5, cell_y + 5))
+            pygame.draw.line(screen, pygame.Color(0, 0, 0), (cell_x + self.cell_size - 2, cell_y + self.cell_size - 2),
+                             (cell_x + self.cell_size - 5, cell_y + self.cell_size - 5))
+            pygame.draw.line(screen, pygame.Color(0, 0, 0), (cell_x + self.cell_size - 2, cell_y + 1),
+                             (cell_x + self.cell_size - 6, cell_y + 5))
+            pygame.draw.line(screen, pygame.Color(0, 0, 0), (cell_x + 5, cell_y + self.cell_size - 6),
+                             (cell_x + 1, cell_y + self.cell_size - 2))
+
+    def render(self, screen):  # отрисовка игрового поля
         for y in range(self.height):
             for x in range(self.width):
-                if not self.board[y][x]:
-                    pygame.draw.rect(screen, pygame.Color(255, 255, 255), (
-                        x * self.cell_size + self.left, y * self.cell_size + self.top, self.cell_size,
-                        self.cell_size), 1)
-                else:
-                    pygame.draw.rect(screen, pygame.Color(self.board[y][x]), (
-                        x * self.cell_size + self.left + 1, y * self.cell_size + self.top + 1, self.cell_size - 2,
-                        self.cell_size - 2))
-                    pygame.draw.rect(screen, pygame.Color(255, 255, 255), (
-                        x * self.cell_size + self.left, y * self.cell_size + self.top, self.cell_size,
-                        self.cell_size), 1)
-                    pygame.draw.rect(screen, pygame.Color(0, 0, 0), (
-                        x * self.cell_size + self.left + 1, y * self.cell_size + self.top + 1, self.cell_size - 2,
-                        self.cell_size - 2), 1)
-                    pygame.draw.rect(screen, pygame.Color(0, 0, 0), (
-                        x * self.cell_size + self.left + 5, y * self.cell_size + self.top + 5, self.cell_size - 10,
-                        self.cell_size - 10), 1)
-                    pygame.draw.line(screen, pygame.Color(0, 0, 0),
-                                     (x * self.cell_size + self.left + 1, y * self.cell_size + self.top + 1),
-                                     (x * self.cell_size + self.left + 5, y * self.cell_size + self.top + 5))
-                    pygame.draw.line(screen, pygame.Color(0, 0, 0), (
-                    x * self.cell_size + self.left + self.cell_size - 2,
-                    y * self.cell_size + self.top + self.cell_size - 2),
-                                     (x * self.cell_size + self.left + self.cell_size - 5,
-                                      y * self.cell_size + self.top + self.cell_size - 5))
-                    pygame.draw.line(screen, pygame.Color(0, 0, 0), (
-                    x * self.cell_size + self.left - 2 + self.cell_size, y * self.cell_size + self.top + 1),
-                                     (x * self.cell_size + self.left + self.cell_size - 6,
-                                      y * self.cell_size + self.top + 5))
-                    pygame.draw.line(screen, pygame.Color(0, 0, 0), (
-                    x * self.cell_size + self.left + 5, y * self.cell_size + self.top + self.cell_size - 6),
-                                     (x * self.cell_size + self.left + 1,
-                                      y * self.cell_size + self.top + self.cell_size - 2))
+                self.draw_cell(screen, x, y, self.board[y][x])
+        self.draw_next_figure(screen)
+
+    def draw_next_figure(self, screen):
+        for x, y in self.next_shape.coordinates:
+            self.draw_cell(screen, x, y, self.next_shape.color, left=265, top=255)
 
     def can_move(self, dx, dy):
         for x, y in self.shape.coordinates:

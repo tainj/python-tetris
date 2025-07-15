@@ -1,8 +1,7 @@
 from game.game import Game
+from game.tetris import Tetris
 
 if __name__ == '__main__':
-    game = Game()
-    # game.load()
-    # game.show_menu()
-    game.run()
+    tetris = Tetris()
+    tetris.run()
 
