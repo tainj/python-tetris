@@ -1,4 +1,3 @@
-from game.game import Game
 from game.tetris import Tetris
 
 if __name__ == '__main__':
